@@ -74,7 +74,7 @@ fn part2(input: &str) -> Result<u32> {
         if inter.len() != 1 {
             return Err(anyhow!("intersection {:?} had length {}, must be 1", inter, inter.len()))
         }
-        total += inter.iter().nth(0).unwrap().priority()?
+        total += inter.iter().next().unwrap().priority()?
     }
 
     Ok(total)

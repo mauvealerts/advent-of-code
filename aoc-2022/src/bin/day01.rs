@@ -16,7 +16,7 @@ fn solve(input: &str) -> Result<Answer> {
     let mut acc: u32 = 0;
     let mut elves = vec![];
     for l in input.lines() {
-        if l != "" {
+        if !l.is_empty() {
             acc += l.parse::<u32>()?;
             continue;
         }
