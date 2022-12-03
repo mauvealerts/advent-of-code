@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn example() {
-        let answer = solve(include_str!("../../data/example/input/day01.txt")).unwrap();
+        let answer = solve(include_str!("../../data/example/day01.txt")).unwrap();
         assert_eq!(answer, Answer {max: 24000, top3: 45000});
     }
 }
