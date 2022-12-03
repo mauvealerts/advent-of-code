@@ -12,12 +12,14 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Choice {
     Rock,
     Paper,
     Scissors,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Outcome {
     Lose,
     Draw,
@@ -44,16 +46,17 @@ impl Choice {
     }
 
     fn for_outcome(&self, outcome: Outcome) -> Self {
+        if Outcome::Draw == outcome {
+            return *self;
+        }
         match (self, outcome) {
             (Choice::Rock, Outcome::Lose) => Choice::Scissors,
-            (Choice::Rock, Outcome::Draw) => Choice::Rock,
             (Choice::Rock, Outcome::Win) => Choice::Paper,
             (Choice::Paper, Outcome::Lose) => Choice::Rock,
-            (Choice::Paper, Outcome::Draw) => Choice::Paper,
             (Choice::Paper, Outcome::Win) => Choice::Scissors,
             (Choice::Scissors, Outcome::Lose) => Choice::Paper,
-            (Choice::Scissors, Outcome::Draw) => Choice::Scissors,
             (Choice::Scissors, Outcome::Win) => Choice::Rock,
+            _ => unreachable!()
         }
     }
 
@@ -66,16 +69,17 @@ impl Choice {
     }
 
     fn match_score(&self, other: &Choice) -> u32 {
+        if self == other {
+            return 3;
+        }
         match (self, other) {
-            (Choice::Rock, Choice::Rock) => 3,
             (Choice::Rock, Choice::Paper) => 0,
             (Choice::Rock, Choice::Scissors) => 6,
             (Choice::Paper, Choice::Rock) => 6,
-            (Choice::Paper, Choice::Paper) => 3,
             (Choice::Paper, Choice::Scissors) => 0,
             (Choice::Scissors, Choice::Rock) => 0,
             (Choice::Scissors, Choice::Paper) => 6,
-            (Choice::Scissors, Choice::Scissors) => 3,
+            _ => unreachable!()
         }
     }
 }
