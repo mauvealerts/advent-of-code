@@ -1,12 +1,18 @@
 use anyhow::Result;
 
+#[derive(Debug, PartialEq, Eq)]
+struct Answer {
+    max: u32,
+    top3: u32,
+}
+
 fn main() -> Result<()> {
     let d = include_str!("../../data/challenge/day01.txt");
-    println!("{}", solve(d)?);
+    println!("{:#?}", solve(d)?);
     Ok(())
 }
 
-fn solve(input: &str) -> Result<String> {
+fn solve(input: &str) -> Result<Answer> {
     let mut acc: u32 = 0;
     let mut elves = vec![];
     for l in input.lines() {
@@ -18,7 +24,11 @@ fn solve(input: &str) -> Result<String> {
         acc = 0;
     }
     elves.push(acc);
-    Ok(elves.into_iter().max().unwrap_or(0).to_string())
+    elves.sort();
+    elves.reverse();
+    let top3: u32 = elves[..3].iter().sum();
+    let max = elves.into_iter().max().unwrap_or(0);
+    Ok(Answer { max, top3 })
 }
 
 #[cfg(test)]
@@ -28,6 +38,6 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/input/day01.txt")).unwrap();
-        assert_eq!(answer, "24000");
+        assert_eq!(answer, Answer {max: 24000, top3: 45000});
     }
 }
