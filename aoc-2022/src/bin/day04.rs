@@ -36,7 +36,7 @@ impl FromStr for R {
     fn from_str(s: &str) -> Result<Self> {
         let parts = s.split("-").collect::<Vec<_>>();
         if parts.len() != 2 {
-            return Err(anyhow!("Range had {} parts, expected 2", parts.len()));
+            return Err(anyhow!("Range {:?} had {} parts, expected 2", s, parts.len()));
         }
         let lower = parts[0].parse()?;
         let upper = parts[1].parse()?;
@@ -57,7 +57,7 @@ impl FromStr for P {
     fn from_str(s: &str) -> Result<Self> {
         let parts = s.split(",").collect::<Vec<_>>();
         if parts.len() != 2 {
-            return Err(anyhow!("Elf had {} parts, expected 2", parts.len()));
+            return Err(anyhow!("Pair {:?} had {} parts, expected 2", s, parts.len()));
         }
         let first = parts[0].parse()?;
         let second = parts[1].parse()?;
