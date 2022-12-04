@@ -1,0 +1,106 @@
+use std::str::FromStr;
+
+use anyhow::{Context, Result, anyhow};
+
+#[derive(Debug, PartialEq, Eq)]
+struct Answer {
+    part1: u32,
+    part2: u32,
+}
+fn main() -> Result<()> {
+    let d = include_str!("../../data/challenge/day04.txt");
+    println!("{:#?}", solve(d)?);
+    Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct R {
+    lower: u32,
+    upper: u32,
+}
+
+impl R {
+    fn contains(&self, other: &R) -> bool {
+        self.lower <= other.lower && self.upper >= other.upper
+    }
+
+    fn overlaps(&self, other: &R) -> bool {
+        let r = self.lower..=self.upper;
+        r.contains(&other.lower) || r.contains(&other.upper)
+    }
+}
+
+impl FromStr for R {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let parts = s.split("-").collect::<Vec<_>>();
+        if parts.len() != 2 {
+            return Err(anyhow!("Range had {} parts, expected 2", parts.len()));
+        }
+        let lower = parts[0].parse()?;
+        let upper = parts[1].parse()?;
+        Ok(R {lower, upper})
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct P {
+    first: R,
+    second: R,
+}
+
+
+impl FromStr for P {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let parts = s.split(",").collect::<Vec<_>>();
+        if parts.len() != 2 {
+            return Err(anyhow!("Elf had {} parts, expected 2", parts.len()));
+        }
+        let first = parts[0].parse()?;
+        let second = parts[1].parse()?;
+        Ok(P {first, second})
+    }
+}
+
+fn part1(input: &str) -> Result<u32> {
+    let mut subset = 0;
+    for (i, l) in input.lines().enumerate() {
+        let p: P = l.parse().with_context(|| format!("Line {}", i))?;
+        if p.first.contains(&p.second) || p.second.contains(&p.first) {
+            subset += 1
+        }
+    }
+    Ok(subset)
+}
+
+fn part2(input: &str) -> Result<u32> {
+    let mut overlap = 0;
+    for l in input.lines() {
+        let p: P = l.parse()?;
+        if p.first.overlaps(&p.second) || p.second.overlaps(&p.first) {
+            overlap += 1
+        }
+    }
+    Ok(overlap)
+}
+
+fn solve(input: &str) -> Result<Answer> {
+    let part1 = part1(input)?;
+    let part2 = part2(input)?;
+
+    Ok(Answer { part1, part2 })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn example() {
+        let answer = solve(include_str!("../../data/example/day04.txt")).unwrap();
+        assert_eq!(answer, Answer { part1: 2, part2: 4});
+    }
+}
