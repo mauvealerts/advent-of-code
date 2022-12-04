@@ -1,6 +1,11 @@
 use std::str::FromStr;
 
 use anyhow::{Context, Result, anyhow};
+use tinyvec::ArrayVec;
+
+// This is the same as day04, but uses ArrayVec to avoid heap allocations.
+// This still isn't no_std (due to formatting), but drastically reduces allocations.
+// On x86_64-pc-windows-msvc with Rust 1.65, it goes from ~6K to ~120
 
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
@@ -35,7 +40,7 @@ impl FromStr for R {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let parts = s.split("-").collect::<Vec<_>>();
+        let parts: ArrayVec<[_; 2]> = s.split("-").collect();
         if parts.len() != 2 {
             return Err(anyhow!("Range {:?} had {} parts, expected 2", s, parts.len()));
         }
@@ -56,7 +61,7 @@ impl FromStr for P {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let parts = s.split(",").collect::<Vec<_>>();
+        let parts: ArrayVec<[_; 2]> = s.split(",").collect();
         if parts.len() != 2 {
             return Err(anyhow!("Pair {:?} had {} parts, expected 2", s, parts.len()));
         }
