@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
@@ -31,7 +31,7 @@ impl Prioritized for char {
         } else if (LC_A..=LC_Z).contains(&num) {
             num - LC_A + 1
         } else {
-            return Err(anyhow!("{:?} isn't within [a, z] nor [A, Z]", self))
+            return Err(anyhow!("{:?} isn't within [a, z] nor [A, Z]", self));
         };
         Ok(val)
     }
@@ -40,16 +40,20 @@ impl Prioritized for char {
 fn part1(input: &str) -> Result<u32> {
     let mut total = 0;
     for (i, l) in input.lines().enumerate() {
-        let l: Vec<_> = l.chars().collect(); 
+        let l: Vec<_> = l.chars().collect();
         if l.len() % 2 == 1 {
-            return Err(anyhow!("line {} had length {}, must be even", i, l.len()))
+            return Err(anyhow!("line {} had length {}, must be even", i, l.len()));
         }
         let mid = l.len() / 2;
         let first: HashSet<_> = l[..mid].iter().collect();
         let second: HashSet<_> = l[mid..].iter().collect();
         let inter: Vec<_> = first.intersection(&second).collect();
         if inter.len() != 1 {
-            return Err(anyhow!("intersection {:?} had length {}, must be 1", inter, inter.len()))
+            return Err(anyhow!(
+                "intersection {:?} had length {}, must be 1",
+                inter,
+                inter.len()
+            ));
         }
         total += inter[0].priority()?
     }
@@ -60,7 +64,7 @@ fn part1(input: &str) -> Result<u32> {
 fn part2(input: &str) -> Result<u32> {
     let lines: Vec<_> = input.lines().collect();
     if lines.len() % 3 != 0 {
-        return Err(anyhow!("{} lines, must be multiple of 3", lines.len()))
+        return Err(anyhow!("{} lines, must be multiple of 3", lines.len()));
     }
     let mut total = 0;
     for group in lines.chunks_exact(3) {
@@ -72,7 +76,11 @@ fn part2(input: &str) -> Result<u32> {
         }
 
         if inter.len() != 1 {
-            return Err(anyhow!("intersection {:?} had length {}, must be 1", inter, inter.len()))
+            return Err(anyhow!(
+                "intersection {:?} had length {}, must be 1",
+                inter,
+                inter.len()
+            ));
         }
         total += inter.iter().next().unwrap().priority()?
     }
@@ -94,6 +102,12 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/day03.txt")).unwrap();
-        assert_eq!(answer, Answer { part1: 157, part2: 70});
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 157,
+                part2: 70
+            }
+        );
     }
 }

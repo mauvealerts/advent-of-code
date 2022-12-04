@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
@@ -37,11 +37,15 @@ impl FromStr for R {
     fn from_str(s: &str) -> Result<Self> {
         let parts = s.split("-").collect::<Vec<_>>();
         if parts.len() != 2 {
-            return Err(anyhow!("Range {:?} had {} parts, expected 2", s, parts.len()));
+            return Err(anyhow!(
+                "Range {:?} had {} parts, expected 2",
+                s,
+                parts.len()
+            ));
         }
         let lower = parts[0].parse()?;
         let upper = parts[1].parse()?;
-        Ok(R {lower, upper})
+        Ok(R { lower, upper })
     }
 }
 
@@ -51,18 +55,21 @@ struct P {
     second: R,
 }
 
-
 impl FromStr for P {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
         let parts = s.split(",").collect::<Vec<_>>();
         if parts.len() != 2 {
-            return Err(anyhow!("Pair {:?} had {} parts, expected 2", s, parts.len()));
+            return Err(anyhow!(
+                "Pair {:?} had {} parts, expected 2",
+                s,
+                parts.len()
+            ));
         }
         let first = parts[0].parse()?;
         let second = parts[1].parse()?;
-        Ok(P {first, second})
+        Ok(P { first, second })
     }
 }
 
@@ -102,6 +109,6 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/day04.txt")).unwrap();
-        assert_eq!(answer, Answer { part1: 2, part2: 4});
+        assert_eq!(answer, Answer { part1: 2, part2: 4 });
     }
 }

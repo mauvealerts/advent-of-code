@@ -5,6 +5,7 @@ struct Answer {
     part1: u32,
     part2: u32,
 }
+
 fn main() -> Result<()> {
     let d = include_str!("../../data/challenge/template.txt");
     println!("{:#?}", solve(d)?);
@@ -33,6 +34,6 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/template.txt")).unwrap();
-        assert_eq!(answer, Answer { part1: 0, part2: 0});
+        assert_eq!(answer, Answer { part1: 0, part2: 0 });
     }
 }

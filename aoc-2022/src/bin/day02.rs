@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
@@ -32,7 +32,7 @@ impl Choice {
             'A' => Ok(Choice::Rock),
             'B' => Ok(Choice::Paper),
             'C' => Ok(Choice::Scissors),
-            _ => Err(anyhow!("Unrecognized {}", c))
+            _ => Err(anyhow!("Unrecognized {}", c)),
         }
     }
 
@@ -41,7 +41,7 @@ impl Choice {
             'X' => Ok(Choice::Rock),
             'Y' => Ok(Choice::Paper),
             'Z' => Ok(Choice::Scissors),
-            _ => Err(anyhow!("Unrecognized {}", c))
+            _ => Err(anyhow!("Unrecognized {}", c)),
         }
     }
 
@@ -56,7 +56,7 @@ impl Choice {
             (Choice::Paper, Outcome::Win) => Choice::Scissors,
             (Choice::Scissors, Outcome::Lose) => Choice::Paper,
             (Choice::Scissors, Outcome::Win) => Choice::Rock,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -79,7 +79,7 @@ impl Choice {
             (Choice::Paper, Choice::Scissors) => 0,
             (Choice::Scissors, Choice::Rock) => 0,
             (Choice::Scissors, Choice::Paper) => 6,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -90,7 +90,7 @@ impl Outcome {
             'X' => Ok(Outcome::Lose),
             'Y' => Ok(Outcome::Draw),
             'Z' => Ok(Outcome::Win),
-            _ => Err(anyhow!("Unrecognized {}", c))
+            _ => Err(anyhow!("Unrecognized {}", c)),
         }
     }
 }
@@ -98,8 +98,8 @@ impl Outcome {
 fn solve(input: &str) -> Result<Answer> {
     let mut part1 = 0;
     let mut part2 = 0;
-    for (i,l) in input.lines().enumerate() {
-        let l: Vec<_> = l.chars().collect(); 
+    for (i, l) in input.lines().enumerate() {
+        let l: Vec<_> = l.chars().collect();
         if l.len() < 3 {
             return Err(anyhow!("line {} length is {}, expected 3", i, l.len()));
         }
@@ -119,6 +119,12 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/day02.txt")).unwrap();
-        assert_eq!(answer, Answer { part1: 15, part2: 12});
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 15,
+                part2: 12
+            }
+        );
     }
 }
