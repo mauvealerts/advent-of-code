@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1"
+nom = "7.1"
 tinyvec = "1.6"
