@@ -2,11 +2,10 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use nom::branch::alt;
-use nom::bytes::complete::take_while_m_n;
-use nom::character::complete::{char as nom_char, line_ending, multispace0};
+use nom::character::complete::{alpha1, char as nom_char, digit1, line_ending, multispace0};
 use nom::combinator::{all_consuming, map_res};
 use nom::error::{convert_error, VerboseError};
-use nom::multi::separated_list1;
+use nom::multi::{count, separated_list1};
 use nom::Finish;
 use nom::{bytes::complete::tag, sequence::tuple};
 
@@ -118,16 +117,12 @@ impl Crates {
 type IResult<'a, T> = nom::IResult<&'a str, T, VerboseError<&'a str>>;
 
 fn item_crate(input: &str) -> IResult<Option<char>> {
-    let (input, (_, item, _)) = tuple((
-        tag("["),
-        take_while_m_n(1, 1, |c: char| c.is_alphabetic()),
-        tag("]"),
-    ))(input)?;
+    let (input, (_, item, _)) = tuple((tag("["), alpha1, tag("]")))(input)?;
     Ok((input, Some(item.chars().next().unwrap())))
 }
 
 fn absent_crate(input: &str) -> IResult<Option<char>> {
-    let (input, _) = take_while_m_n(3, 3, |c: char| c == ' ')(input)?;
+    let (input, _) = count(nom_char(' '), 3)(input)?;
     Ok((input, None))
 }
 
@@ -141,11 +136,7 @@ fn crate_line(input: &str) -> IResult<CrateLine> {
 }
 
 fn label(input: &str) -> IResult<()> {
-    let (input, _) = tuple((
-        nom_char(' '),
-        take_while_m_n(1, 1, |c: char| c.is_numeric()),
-        nom_char(' '),
-    ))(input)?;
+    let (input, _) = tuple((nom_char(' '), digit1, nom_char(' ')))(input)?;
     Ok((input, ()))
 }
 
@@ -154,18 +145,14 @@ fn label_line(input: &str) -> IResult<()> {
     Ok((input, ()))
 }
 
-fn is_dec_digit(c: char) -> bool {
-    c.is_ascii_digit()
-}
-
 fn a_move(input: &str) -> IResult<(usize, usize, usize)> {
     let (input, (_, count, _, src, _, dest)) = tuple((
         tag("move "),
-        map_res(take_while_m_n(1, 9, is_dec_digit), usize::from_str),
+        map_res(digit1, usize::from_str),
         tag(" from "),
-        map_res(take_while_m_n(1, 1, is_dec_digit), usize::from_str),
+        map_res(digit1, usize::from_str),
         tag(" to "),
-        map_res(take_while_m_n(1, 1, is_dec_digit), usize::from_str),
+        map_res(digit1, usize::from_str),
     ))(input)?;
     Ok((input, (count, src, dest)))
 }
@@ -195,14 +182,9 @@ fn parse_input(input: &str) -> IResult<(Crates, Vec<Move>)> {
 
 fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<String> {
     // Force stringification of error to avoid pain of lifetime
-    let (leftover, (mut crates, moves)) = parse_input(input)
+    let (_, (mut crates, moves)) = parse_input(input)
         .finish()
         .map_err(|e| anyhow!("Parse error: {}", convert_error(input, e)))?;
-    ensure!(
-        leftover.is_empty(),
-        "Had leftover non-whitespace input {:?}",
-        leftover
-    );
 
     for (i, m) in moves.iter().enumerate() {
         crates
