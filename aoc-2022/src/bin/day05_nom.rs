@@ -155,7 +155,7 @@ fn label_line(input: &str) -> IResult<()> {
 }
 
 fn is_dec_digit(c: char) -> bool {
-    c.is_digit(10)
+    c.is_ascii_digit()
 }
 
 fn a_move(input: &str) -> IResult<(usize, usize, usize)> {
@@ -206,9 +206,9 @@ fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<St
 
     for (i, m) in moves.iter().enumerate() {
         crates
-            .check_bounds(&m)
-            .with_context(|| format!("Move {}", i))?;
-        run(&mut crates, &m)?;
+            .check_bounds(m)
+            .with_context(|| format!("Move {i}"))?;
+        run(&mut crates, m)?;
     }
 
     let mut ret = "".to_owned();

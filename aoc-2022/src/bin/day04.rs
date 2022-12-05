@@ -35,7 +35,7 @@ impl FromStr for R {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let parts = s.split("-").collect::<Vec<_>>();
+        let parts = s.split('-').collect::<Vec<_>>();
         if parts.len() != 2 {
             return Err(anyhow!(
                 "Range {:?} had {} parts, expected 2",
@@ -59,7 +59,7 @@ impl FromStr for P {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let parts = s.split(",").collect::<Vec<_>>();
+        let parts = s.split(',').collect::<Vec<_>>();
         if parts.len() != 2 {
             return Err(anyhow!(
                 "Pair {:?} had {} parts, expected 2",
@@ -76,7 +76,7 @@ impl FromStr for P {
 fn part1(input: &str) -> Result<u32> {
     let mut subset = 0;
     for (i, l) in input.lines().enumerate() {
-        let p: P = l.parse().with_context(|| format!("Line {}", i))?;
+        let p: P = l.parse().with_context(|| format!("Line {i}"))?;
         if p.first.contains(&p.second) || p.second.contains(&p.first) {
             subset += 1
         }

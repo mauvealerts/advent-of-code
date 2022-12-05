@@ -24,7 +24,7 @@ impl FromStr for Move {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let mut parts = s.split(" ");
+        let mut parts = s.split(' ');
 
         parts.next().ok_or_else(|| anyhow!("move has no parts"))?;
         let count: usize = parts
@@ -169,10 +169,10 @@ fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<St
     let mut crates: Crates = input[..board_end].parse()?;
 
     for (i, l) in input[move_start..].lines().enumerate() {
-        let m: Move = l.parse().with_context(|| format!("Move {}", i))?;
+        let m: Move = l.parse().with_context(|| format!("Move {i}"))?;
         crates
             .check_bounds(&m)
-            .with_context(|| format!("Move {}", i))?;
+            .with_context(|| format!("Move {i}"))?;
         run(&mut crates, &m)?;
     }
 
