@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use nom::branch::alt;
 use nom::bytes::complete::take_while_m_n;
-use nom::character::complete::{char as nom_char, line_ending};
-use nom::combinator::map_res;
+use nom::character::complete::{char as nom_char, line_ending, multispace0};
+use nom::combinator::{all_consuming, map_res};
+use nom::error::{convert_error, VerboseError};
 use nom::multi::separated_list1;
-use nom::IResult;
+use nom::Finish;
 use nom::{bytes::complete::tag, sequence::tuple};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -41,15 +42,9 @@ struct CrateLine {
 impl Move {
     fn from_parsed(t: (usize, usize, usize)) -> Result<Self> {
         let (count, src, dest) = t;
-        if count < 1 {
-            return Err(anyhow!("count was {}, must be positive", count));
-        }
-        if src < 1 {
-            return Err(anyhow!("source was {}, must be positive", src));
-        }
-        if dest < 1 {
-            return Err(anyhow!("destination was {}, must be positive", dest));
-        }
+        ensure!(count > 0, "count was {}, must be positive", count);
+        ensure!(src > 0, "source was {}, must be positive", src);
+        ensure!(dest > 0, "dest was {}, must be positive", dest);
         let (src, dest) = (src - 1, dest - 1);
         Ok(Move { count, src, dest })
     }
@@ -60,12 +55,12 @@ impl Crates {
         let expected_len = lines[0].line.len();
         for (i, l) in lines.iter().enumerate() {
             if l.line.len() != expected_len {
-                return Err(anyhow!(
+                bail!(
                     "Crate line {} had {} entries, expected {}",
                     i,
                     l.line.len(),
                     expected_len
-                ));
+                );
             }
         }
         let mut columns: Vec<Vec<char>> = (0..expected_len)
@@ -82,27 +77,24 @@ impl Crates {
     }
 
     fn check_bounds(&self, m: &Move) -> Result<()> {
-        if !(0..self.columns.len()).contains(&m.src) {
-            return Err(anyhow!(
-                "source was {}, expected within [0, {})",
-                m.src,
-                self.columns.len()
-            ));
-        }
-        if !(0..self.columns.len()).contains(&m.dest) {
-            return Err(anyhow!(
-                "destination was {}, expected within [0, {})",
-                m.dest,
-                self.columns.len()
-            ));
-        }
-        if m.count > self.columns[m.src].len() {
-            return Err(anyhow!(
-                "count is {} but column only has {}",
-                m.count,
-                self.columns.len()
-            ));
-        }
+        ensure!(
+            (0..self.columns.len()).contains(&m.src),
+            "source was {}, expected within [0, {})",
+            m.src,
+            self.columns.len()
+        );
+        ensure!(
+            (0..self.columns.len()).contains(&m.dest),
+            "destination was {}, expected within [0, {})",
+            m.dest,
+            self.columns.len()
+        );
+        ensure!(
+            m.count <= self.columns[m.src].len(),
+            "count is {} but column only has {}",
+            m.count,
+            self.columns[m.src].len()
+        );
         Ok(())
     }
 
@@ -123,7 +115,9 @@ impl Crates {
     }
 }
 
-fn item_crate(input: &str) -> IResult<&str, Option<char>> {
+type IResult<'a, T> = nom::IResult<&'a str, T, VerboseError<&'a str>>;
+
+fn item_crate(input: &str) -> IResult<Option<char>> {
     let (input, (_, item, _)) = tuple((
         tag("["),
         take_while_m_n(1, 1, |c: char| c.is_alphabetic()),
@@ -132,21 +126,21 @@ fn item_crate(input: &str) -> IResult<&str, Option<char>> {
     Ok((input, Some(item.chars().next().unwrap())))
 }
 
-fn absent_crate(input: &str) -> IResult<&str, Option<char>> {
+fn absent_crate(input: &str) -> IResult<Option<char>> {
     let (input, _) = take_while_m_n(3, 3, |c: char| c == ' ')(input)?;
     Ok((input, None))
 }
 
-fn a_crate(input: &str) -> IResult<&str, Option<char>> {
+fn a_crate(input: &str) -> IResult<Option<char>> {
     alt((item_crate, absent_crate))(input)
 }
 
-fn crate_line(input: &str) -> IResult<&str, CrateLine> {
+fn crate_line(input: &str) -> IResult<CrateLine> {
     let (input, line) = separated_list1(nom_char(' '), a_crate)(input)?;
     Ok((input, CrateLine { line }))
 }
 
-fn label(input: &str) -> IResult<&str, ()> {
+fn label(input: &str) -> IResult<()> {
     let (input, _) = tuple((
         nom_char(' '),
         take_while_m_n(1, 1, |c: char| c.is_numeric()),
@@ -155,7 +149,7 @@ fn label(input: &str) -> IResult<&str, ()> {
     Ok((input, ()))
 }
 
-fn label_line(input: &str) -> IResult<&str, ()> {
+fn label_line(input: &str) -> IResult<()> {
     let (input, _) = separated_list1(nom_char(' '), label)(input)?;
     Ok((input, ()))
 }
@@ -164,7 +158,7 @@ fn is_dec_digit(c: char) -> bool {
     c.is_digit(10)
 }
 
-fn a_move(input: &str) -> IResult<&str, (usize, usize, usize)> {
+fn a_move(input: &str) -> IResult<(usize, usize, usize)> {
     let (input, (_, count, _, src, _, dest)) = tuple((
         tag("move "),
         map_res(take_while_m_n(1, 9, is_dec_digit), usize::from_str),
@@ -176,7 +170,7 @@ fn a_move(input: &str) -> IResult<&str, (usize, usize, usize)> {
     Ok((input, (count, src, dest)))
 }
 
-fn crates_section(input: &str) -> IResult<&str, Crates> {
+fn crates_section(input: &str) -> IResult<Crates> {
     let (input, (crates, _, _, _)) = tuple((
         map_res(
             separated_list1(line_ending, crate_line),
@@ -189,22 +183,26 @@ fn crates_section(input: &str) -> IResult<&str, Crates> {
     Ok((input, crates))
 }
 
-fn parse_input(input: &str) -> IResult<&str, (Crates, Vec<Move>)> {
-    let (input, (crates, _, moves)) = tuple((
+fn parse_input(input: &str) -> IResult<(Crates, Vec<Move>)> {
+    let (input, (crates, _, moves, _)) = all_consuming(tuple((
         crates_section,
         line_ending,
         separated_list1(line_ending, map_res(a_move, Move::from_parsed)),
-    ))(input)?;
+        multispace0,
+    )))(input)?;
     Ok((input, (crates, moves)))
 }
 
 fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<String> {
     // Force stringification of error to avoid pain of lifetime
-    let (leftover, (mut crates, moves)) =
-        parse_input(input).map_err(|e| anyhow!("Parse error: {}", e))?;
-    if !leftover.chars().all(|c| c.is_whitespace()) {
-        return Err(anyhow!("Had leftover non-whitespace input {:?}", leftover));
-    }
+    let (leftover, (mut crates, moves)) = parse_input(input)
+        .finish()
+        .map_err(|e| anyhow!("Parse error: {}", convert_error(input, e)))?;
+    ensure!(
+        leftover.is_empty(),
+        "Had leftover non-whitespace input {:?}",
+        leftover
+    );
 
     for (i, m) in moves.iter().enumerate() {
         crates
