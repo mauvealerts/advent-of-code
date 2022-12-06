@@ -4,7 +4,7 @@ use std::str::FromStr;
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use nom::branch::alt;
 use nom::character::complete::{alpha1, char as nom_char, digit1, line_ending, multispace0};
-use nom::combinator::{all_consuming, map_res};
+use nom::combinator::{all_consuming, map, map_res, value};
 use nom::error::{convert_error, VerboseError};
 use nom::multi::{count, separated_list1};
 use nom::Finish;
@@ -121,18 +121,14 @@ fn move_fast(src: &mut Vec<char>, dest: &mut Vec<char>, count: usize) {
 
 type IResult<'a, T> = nom::IResult<&'a str, T, VerboseError<&'a str>>;
 
-fn item_crate(input: &str) -> IResult<Option<char>> {
-    let (input, (_, item, _)) = tuple((tag("["), alpha1, tag("]")))(input)?;
-    Ok((input, Some(item.chars().next().unwrap())))
-}
-
-fn absent_crate(input: &str) -> IResult<Option<char>> {
-    let (input, _) = count(nom_char(' '), 3)(input)?;
-    Ok((input, None))
-}
-
 fn a_crate(input: &str) -> IResult<Option<char>> {
-    alt((item_crate, absent_crate))(input)
+    alt((
+        map(
+            tuple((nom_char::<&str, _>('['), alpha1, nom_char(']'))),
+            |(_, items, _)| Some(items.chars().next().unwrap()),
+        ),
+        value(None, count(nom_char(' '), 3)),
+    ))(input)
 }
 
 fn crate_line(input: &str) -> IResult<CrateLine> {
@@ -140,13 +136,9 @@ fn crate_line(input: &str) -> IResult<CrateLine> {
     Ok((input, CrateLine { line }))
 }
 
-fn label(input: &str) -> IResult<()> {
-    let (input, _) = tuple((nom_char(' '), digit1, nom_char(' ')))(input)?;
-    Ok((input, ()))
-}
-
 fn label_line(input: &str) -> IResult<()> {
-    let (input, _) = separated_list1(nom_char(' '), label)(input)?;
+    let (input, _) =
+        separated_list1(nom_char(' '), tuple((nom_char(' '), digit1, nom_char(' '))))(input)?;
     Ok((input, ()))
 }
 
@@ -269,9 +261,6 @@ mod tests {
 
     #[test]
     fn parse_labels() {
-        let (leftover, ()) = label(" 1 ").unwrap();
-        assert_eq!(leftover, "");
-
         let (leftover, ()) = label_line(" 1 ").unwrap();
         assert_eq!(leftover, "");
 
