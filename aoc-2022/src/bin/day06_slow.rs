@@ -1,5 +1,7 @@
 use anyhow::{bail, Result};
 
+// This was the solution I wrote first
+
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
     part1: usize,
@@ -14,23 +16,27 @@ fn main() -> Result<()> {
 
 fn find_distinct(input: &str, win_size: usize) -> Result<usize> {
     let mut checks = 0;
-    let input: Vec<_> = input.chars().collect();
-    let mut idx = 0;
-    'outer: while idx <= input.len() - win_size {
-        let win = &input[idx..idx + win_size];
-        for (i, c) in win.iter().enumerate().rev() {
-            if win[i + 1..].iter().any(|d| {
-                checks += 1;
-                d == c
-            }) {
-                idx = idx + i + 1;
-                continue 'outer;
+    if let Some(idx) = input
+        .chars()
+        .collect::<Vec<_>>()
+        .windows(win_size)
+        .position(|w| {
+            for i in 0..w.len() {
+                if w[..i].iter().chain(w[i + 1..].iter()).any(|c| {
+                    checks += 1;
+                    c == &w[i]
+                }) {
+                    return false;
+                }
             }
-        }
+            true
+        })
+    {
         println!("checks {checks}");
-        return Ok(idx + win_size);
+        Ok(idx + win_size)
+    } else {
+        bail!("No starting point found")
     }
-    bail!("No starting point found")
 }
 
 fn part1(input: &str) -> Result<usize> {
