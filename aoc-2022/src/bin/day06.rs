@@ -13,23 +13,20 @@ fn main() -> Result<()> {
 }
 
 fn find_distinct(input: &str, win_size: usize) -> Result<usize> {
-    if let Some(idx) = input
-        .chars()
-        .collect::<Vec<_>>()
-        .windows(win_size)
-        .position(|w| {
-            for i in 0..w.len() {
-                if w[..i].iter().chain(w[i + 1..].iter()).any(|c| c == &w[i]) {
-                    return false;
-                }
+    let input: Vec<_> = input.chars().collect();
+    let mut idx = 0;
+    'outer: while idx <= input.len() - win_size {
+        let win = &input[idx..idx + win_size];
+        for (i, c) in win.iter().enumerate() {
+            // Check before and after for duplicates
+            if win[i + 1..].iter().any(|d| d == c) {
+                idx = idx + i + 1;
+                continue 'outer;
             }
-            true
-        })
-    {
-        Ok(idx + win_size)
-    } else {
-        bail!("No starting point found")
+        }
+        return Ok(idx + win_size);
     }
+    bail!("No starting point found")
 }
 
 fn part1(input: &str) -> Result<usize> {
