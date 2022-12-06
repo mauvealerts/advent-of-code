@@ -1,9 +1,9 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 
 #[derive(Debug, PartialEq, Eq)]
 struct Answer {
-    part1: u32,
-    part2: u32,
+    part1: usize,
+    part2: usize,
 }
 
 fn main() -> Result<()> {
@@ -12,12 +12,32 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn part1(_input: &str) -> Result<u32> {
-    Ok(0)
+fn find_distinct(input: &str, win_size: usize) -> Result<usize> {
+    if let Some(idx) = input
+        .chars()
+        .collect::<Vec<_>>()
+        .windows(win_size)
+        .position(|w| {
+            for i in 0..w.len() {
+                if w[..i].iter().chain(w[i + 1..].iter()).any(|c| c == &w[i]) {
+                    return false;
+                }
+            }
+            true
+        })
+    {
+        Ok(idx + win_size)
+    } else {
+        bail!("No starting point found")
+    }
 }
 
-fn part2(_input: &str) -> Result<u32> {
-    Ok(0)
+fn part1(input: &str) -> Result<usize> {
+    find_distinct(input, 4)
+}
+
+fn part2(input: &str) -> Result<usize> {
+    find_distinct(input, 14)
 }
 
 fn solve(input: &str) -> Result<Answer> {
@@ -33,7 +53,15 @@ mod tests {
 
     #[test]
     fn example() {
-        let answer = solve(include_str!("../../data/example/day06.txt")).unwrap();
-        assert_eq!(answer, Answer { part1: 0, part2: 0 });
+        for (inp, (part1, part2)) in include_str!("../../data/example/day06.txt").lines().zip([
+            (7, 19),
+            (5, 23),
+            (6, 23),
+            (10, 29),
+            (11, 26),
+        ]) {
+            let answer = solve(inp).unwrap();
+            assert_eq!(answer, Answer { part1, part2 }, "input: {inp:?}");
+        }
     }
 }
