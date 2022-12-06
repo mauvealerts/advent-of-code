@@ -17,8 +17,7 @@ fn find_distinct(input: &str, win_size: usize) -> Result<usize> {
     let mut idx = 0;
     'outer: while idx <= input.len() - win_size {
         let win = &input[idx..idx + win_size];
-        for (i, c) in win.iter().enumerate() {
-            // Check before and after for duplicates
+        for (i, c) in win.iter().enumerate().rev() {
             if win[i + 1..].iter().any(|d| d == c) {
                 idx = idx + i + 1;
                 continue 'outer;
