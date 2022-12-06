@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::str::FromStr;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
@@ -39,11 +40,10 @@ struct CrateLine {
 }
 
 impl Move {
-    fn from_parsed(t: (usize, usize, usize)) -> Result<Self> {
-        let (count, src, dest) = t;
-        ensure!(count > 0, "count was {}, must be positive", count);
-        ensure!(src > 0, "source was {}, must be positive", src);
-        ensure!(dest > 0, "dest was {}, must be positive", dest);
+    fn from_parsed((count, src, dest): (usize, usize, usize)) -> Result<Self> {
+        ensure!(count > 0, "count was {count}, must be positive");
+        ensure!(src > 0, "source was {src}, must be positive");
+        ensure!(dest > 0, "dest was {dest}, must be positive");
         let (src, dest) = (src - 1, dest - 1);
         Ok(Move { count, src, dest })
     }
@@ -55,10 +55,8 @@ impl Crates {
         for (i, l) in lines.iter().enumerate() {
             if l.line.len() != expected_len {
                 bail!(
-                    "Crate line {} had {} entries, expected {}",
-                    i,
-                    l.line.len(),
-                    expected_len
+                    "Crate line {i} had {} entries, expected {expected_len}",
+                    l.line.len()
                 );
             }
         }
@@ -97,21 +95,28 @@ impl Crates {
         Ok(())
     }
 
-    fn run_slow(&mut self, m: &Move) -> Result<()> {
-        self.columns[m.dest].reserve(m.count);
-        for _ in 0..m.count {
-            let tmp = self.columns[m.src].pop().unwrap();
-            self.columns[m.dest].push(tmp)
+    fn run_move(&mut self, m: &Move, mover: Mover) {
+        if m.src == m.dest {
+            return;
         }
-        Ok(())
+        let (a, b) = self.columns.split_at_mut(max(m.src, m.dest));
+        let (src, dest) = if m.src < m.dest {
+            (&mut a[m.src], &mut b[0])
+        } else {
+            (&mut b[0], &mut a[m.dest])
+        };
+        mover(src, dest, m.count)
     }
+}
 
-    fn run_fast(&mut self, m: &Move) -> Result<()> {
-        let start = self.columns[m.src].len() - m.count;
-        let items: Vec<_> = self.columns[m.src].drain(start..).collect();
-        self.columns[m.dest].extend(items);
-        Ok(())
-    }
+type Mover = fn(&mut Vec<char>, &mut Vec<char>, usize);
+
+fn move_slow(src: &mut Vec<char>, dest: &mut Vec<char>, count: usize) {
+    dest.extend(src.drain((src.len() - count)..).rev());
+}
+
+fn move_fast(src: &mut Vec<char>, dest: &mut Vec<char>, count: usize) {
+    dest.extend(src.drain((src.len() - count)..));
 }
 
 type IResult<'a, T> = nom::IResult<&'a str, T, VerboseError<&'a str>>;
@@ -180,7 +185,7 @@ fn parse_input(input: &str) -> IResult<(Crates, Vec<Move>)> {
     Ok((input, (crates, moves)))
 }
 
-fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<String> {
+fn simulate(input: &str, mover: Mover) -> Result<String> {
     // Force stringification of error to avoid pain of lifetime
     let (_, (mut crates, moves)) = parse_input(input)
         .finish()
@@ -190,7 +195,7 @@ fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<St
         crates
             .check_bounds(m)
             .with_context(|| format!("Move {i}"))?;
-        run(&mut crates, m)?;
+        crates.run_move(m, mover);
     }
 
     let mut ret = "".to_owned();
@@ -203,11 +208,11 @@ fn simulate(input: &str, run: fn(&mut Crates, &Move) -> Result<()>) -> Result<St
 }
 
 fn part1(input: &str) -> Result<String> {
-    simulate(input, Crates::run_slow)
+    simulate(input, move_slow)
 }
 
 fn part2(input: &str) -> Result<String> {
-    simulate(input, Crates::run_fast)
+    simulate(input, move_fast)
 }
 
 fn solve(input: &str) -> Result<Answer> {
