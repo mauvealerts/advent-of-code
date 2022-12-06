@@ -17,7 +17,7 @@ fn find_distinct(input: &str, win_size: usize) -> Option<usize> {
         .windows(win_size)
         .position(|w| {
             w.iter()
-                .fold(0_u32, |s, c| s | (1 << (c - 'a' as u8)))
+                .fold(0_u32, |s, c| s | (1 << (c - b'a')))
                 .count_ones() as usize
                 == win_size
         })
