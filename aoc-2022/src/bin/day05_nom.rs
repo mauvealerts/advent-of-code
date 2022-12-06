@@ -142,18 +142,6 @@ fn label_line(input: &str) -> IResult<()> {
     Ok((input, ()))
 }
 
-fn a_move(input: &str) -> IResult<(usize, usize, usize)> {
-    let (input, (_, count, _, src, _, dest)) = tuple((
-        tag("move "),
-        map_res(digit1, usize::from_str),
-        tag(" from "),
-        map_res(digit1, usize::from_str),
-        tag(" to "),
-        map_res(digit1, usize::from_str),
-    ))(input)?;
-    Ok((input, (count, src, dest)))
-}
-
 fn crates_section(input: &str) -> IResult<Crates> {
     let (input, (crates, _, _, _)) = tuple((
         map_res(
@@ -165,6 +153,18 @@ fn crates_section(input: &str) -> IResult<Crates> {
         line_ending,
     ))(input)?;
     Ok((input, crates))
+}
+
+fn a_move(input: &str) -> IResult<(usize, usize, usize)> {
+    let (input, (_, count, _, src, _, dest)) = tuple((
+        tag("move "),
+        map_res(digit1, usize::from_str),
+        tag(" from "),
+        map_res(digit1, usize::from_str),
+        tag(" to "),
+        map_res(digit1, usize::from_str),
+    ))(input)?;
+    Ok((input, (count, src, dest)))
 }
 
 fn parse_input(input: &str) -> IResult<(Crates, Vec<Move>)> {
