@@ -9,3 +9,10 @@ edition = "2021"
 anyhow = "1"
 nom = "7.1"
 tinyvec = "1.6"
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "day06"
+harness = false
