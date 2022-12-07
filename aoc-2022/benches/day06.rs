@@ -34,7 +34,7 @@ pub fn find_distinct_slow_terse_btree(input: &str, win_size: usize) -> Option<us
 }
 
 pub fn find_distinct_slow(input: &str, win_size: usize) -> Option<usize> {
-    if let Some(idx) = input
+    input
         .chars()
         .collect::<Vec<_>>()
         .windows(win_size)
@@ -45,12 +45,7 @@ pub fn find_distinct_slow(input: &str, win_size: usize) -> Option<usize> {
                 }
             }
             true
-        })
-    {
-        Some(idx + win_size)
-    } else {
-        None
-    }
+        }).map(|idx| idx + win_size)
 }
 
 pub fn find_distinct_fewer_cmp(input: &str, win_size: usize) -> Option<usize> {
