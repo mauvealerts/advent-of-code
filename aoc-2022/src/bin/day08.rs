@@ -25,7 +25,7 @@ fn trees(input: &str) -> Grid {
 
 fn vis_corner(
     trees: &Grid,
-    vis: &mut Vec<Vec<bool>>,
+    vis: &mut [Vec<bool>],
     row_nums: impl Iterator<Item = usize> + Clone,
     col_nums: impl Iterator<Item = usize> + Clone,
 ) {
@@ -63,13 +63,13 @@ fn part2(input: &str) -> Result<usize> {
     for r in 1..r_max {
         let mut c_last = vec![0; 10];
 
-        for c in 1..c_max {
+        for (c, cur_last) in r_last.iter_mut().enumerate().take(c_max).skip(1) {
             let t = trees[r][c] as usize;
-            scores[r][c] = (r - r_last[c][t]) * (c - c_last[t]);
+            scores[r][c] = (r - cur_last[t]) * (c - c_last[t]);
 
             for v in 0..=t {
                 c_last[v] = c;
-                r_last[c][v] = r;
+                cur_last[v] = r;
             }
         }
     }
@@ -82,8 +82,8 @@ fn part2(input: &str) -> Result<usize> {
             let t = trees[r][c] as usize;
             scores[r][c] *= (r_last[c][t] - r) * (c_last[t] - c);
 
-            for v in 0..=t {
-                c_last[v] = c;
+            for (v, cur_last) in c_last.iter_mut().enumerate().take(t + 1) {
+                *cur_last = c;
                 r_last[c][v] = r;
             }
         }
