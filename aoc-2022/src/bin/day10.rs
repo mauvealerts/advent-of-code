@@ -16,8 +16,11 @@ enum Inst {
     Addx(i8),
 }
 
-impl Inst {
-    fn into_iter(self) -> impl Iterator<Item = i8> {
+impl IntoIterator for Inst {
+    type Item = i8;
+    type IntoIter = std::vec::IntoIter<i8>;
+
+    fn into_iter(self) -> Self::IntoIter {
         match self {
             Self::Noop => vec![0].into_iter(),
             Self::Addx(v) => vec![0, v].into_iter(),
@@ -51,7 +54,6 @@ fn parse_input(input: &str) -> Result<Vec<Inst>> {
 
 fn cycles(inst: Vec<Inst>) -> impl Iterator<Item = (i32, i32)> {
     inst.into_iter()
-        .map(|op| op.into_iter())
         .flatten()
         .enumerate()
         .scan(1_i32, |state, (pc, delta)| {
