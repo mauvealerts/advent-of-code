@@ -75,29 +75,42 @@ impl Iterator for Move {
     }
 }
 
-#[derive(Default, Hash, Debug, Clone, PartialEq, Eq)]
-struct Coord {
+#[derive(Default, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+struct Knot {
     x: i32,
     y: i32,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-struct State {
-    head: Coord,
-    tail: Coord,
-}
+impl Knot {
+    fn follow(&mut self, lead: &Knot) -> Result<()> {
+        match (lead.x.abs_diff(self.x), lead.y.abs_diff(self.y)) {
+            // touching, nothing to do
+            (0, 0) => {}
+            (0, 1) => {}
+            (1, 0) => {}
+            (1, 1) => {}
+            (2, 0) => Knot::update_coord(lead.x, &mut self.x),
+            (0, 2) => Knot::update_coord(lead.y, &mut self.y),
+            _ => {
+                Knot::update_coord(lead.x, &mut self.x);
+                Knot::update_coord(lead.y, &mut self.y)
+            }
+        }
+        Ok(())
+    }
 
-fn update_coord(h: &mut i32, t: &mut i32) {
-    if *t < *h {
-        *t += 1
-    } else if *t > *h {
-        *t -= 1
+    fn update_coord(l: i32, t: &mut i32) {
+        if *t < l {
+            *t += 1
+        } else if *t > l {
+            *t -= 1
+        }
     }
 }
 
 fn simulate<F>(input: &str, mut visit: F) -> Result<()>
 where
-    F: FnMut(&State) -> Result<()>,
+    F: FnMut(&Knot) -> Result<()>,
 {
     // Parse input up-front so visit isn't called if there's a parse error
     let moves = input
@@ -105,32 +118,14 @@ where
         .map(|l| l.parse())
         .collect::<Result<Vec<Move>, _>>()?;
 
-    let mut s: State = Default::default();
-    visit(&s)?;
+    let mut k = Knot::default();
+    visit(&k)?;
 
     for m in moves {
-        println!("{m:?}");
         for (dx, dy) in m {
-            println!("({dx}, {dy})");
-            s.head.x += dx;
-            s.head.y += dy;
-
-            match (s.head.x.abs_diff(s.tail.x), s.head.y.abs_diff(s.tail.y)) {
-                // touching, nothing to do
-                (0, 0) => {}
-                (0, 1) => {}
-                (1, 0) => {}
-                (1, 1) => {}
-                (2, 0) => update_coord(&mut s.head.x, &mut s.tail.x),
-                (0, 2) => update_coord(&mut s.head.y, &mut s.tail.y),
-                (2, 1) | (1, 2) => {
-                    update_coord(&mut s.head.x, &mut s.tail.x);
-                    update_coord(&mut s.head.y, &mut s.tail.y)
-                }
-                _ => bail!("Unhandled delta amount for {s:?}"),
-            }
-            println!("{s:?}");
-            visit(&s)?;
+            k.x += dx;
+            k.y += dy;
+            visit(&k)?;
         }
     }
     Ok(())
@@ -138,15 +133,28 @@ where
 
 fn part1(input: &str) -> Result<usize> {
     let mut seen = HashSet::new();
-    simulate(input, |s| {
-        seen.insert(s.tail.clone());
+    let mut tail = Knot::default();
+    simulate(input, |head| {
+        tail.follow(head)?;
+        seen.insert(tail.clone());
         Ok(())
     })?;
     Ok(seen.len())
 }
 
-fn part2(_input: &str) -> Result<usize> {
-    Ok(0)
+fn part2(input: &str) -> Result<usize> {
+    let mut seen = HashSet::new();
+    let mut tails = [Knot::default(); 9];
+    simulate(input, |head| {
+        let mut lead = head;
+        for t in tails.iter_mut() {
+            t.follow(lead)?;
+            lead = t
+        }
+        seen.insert(lead.clone());
+        Ok(())
+    })?;
+    Ok(seen.len())
 }
 
 fn solve(input: &str) -> Result<Answer> {
@@ -167,8 +175,14 @@ mod tests {
             answer,
             Answer {
                 part1: 13,
-                part2: 0
+                part2: 1
             }
         );
+    }
+
+    #[test]
+    fn example_larger() {
+        let p2 = part2(include_str!("../../data/example/day09_larger.txt")).unwrap();
+        assert_eq!(p2, 36);
     }
 }
