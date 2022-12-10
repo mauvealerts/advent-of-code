@@ -71,7 +71,7 @@ impl Iterator for Move {
         };
 
         self.amount -= 1;
-        return Some(delta);
+        Some(delta)
     }
 }
 
@@ -100,10 +100,10 @@ impl Knot {
     }
 
     fn update_coord(l: i32, t: &mut i32) {
-        if *t < l {
-            *t += 1
-        } else if *t > l {
-            *t -= 1
+        match l.cmp(t) {
+            std::cmp::Ordering::Less => *t -= 1,
+            std::cmp::Ordering::Equal => {}
+            std::cmp::Ordering::Greater => *t += 1,
         }
     }
 }
@@ -136,7 +136,7 @@ fn part1(input: &str) -> Result<usize> {
     let mut tail = Knot::default();
     simulate(input, |head| {
         tail.follow(head)?;
-        seen.insert(tail.clone());
+        seen.insert(tail);
         Ok(())
     })?;
     Ok(seen.len())
@@ -151,7 +151,7 @@ fn part2(input: &str) -> Result<usize> {
             t.follow(lead)?;
             lead = t
         }
-        seen.insert(lead.clone());
+        seen.insert(*lead);
         Ok(())
     })?;
     Ok(seen.len())

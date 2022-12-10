@@ -77,13 +77,12 @@ fn part1(input: &str) -> Result<i32> {
 
 fn part2(input: &str) -> Result<String> {
     let s = cycles(parse_input(input)?)
-        .map(|(pc, val)| {
+        .flat_map(|(pc, val)| {
             let y = (pc - 1) % 40;
             let ch = if y.abs_diff(val) < 2 { "#" } else { "." };
             let nl = if y == 39 { "\n" } else { "" };
             [ch, nl]
         })
-        .flatten()
         .collect();
     Ok(s)
 }
