@@ -65,27 +65,27 @@ fn cycles(inst: Vec<Inst>) -> impl Iterator<Item = (i32, i32)> {
 }
 
 fn part1(input: &str) -> Result<i32> {
-    let mut score = 0;
-    for (pc, val) in cycles(parse_input(input)?) {
-        match pc {
-            20 | 60 | 100 | 140 | 180 | 220 => score += val * pc,
-            _ => {}
-        }
-    }
-    Ok(score)
+    let s = cycles(parse_input(input)?).fold(0, |score, (pc, val)| {
+        score
+            + match pc {
+                20 | 60 | 100 | 140 | 180 | 220 => val * pc,
+                _ => 0,
+            }
+    });
+    Ok(s)
 }
 
 fn part2(input: &str) -> Result<String> {
-    let mut screen = "".to_owned();
-    for (pc, val) in cycles(parse_input(input)?) {
-        let y = (pc - 1) % 40;
-        let ch = if y.abs_diff(val) < 2 { "#" } else { "." };
-        screen += ch;
-        if y == 39 {
-            screen += "\n"
-        }
-    }
-    Ok(screen)
+    let s = cycles(parse_input(input)?)
+        .map(|(pc, val)| {
+            let y = (pc - 1) % 40;
+            let ch = if y.abs_diff(val) < 2 { "#" } else { "." };
+            let nl = if y == 39 { "\n" } else { "" };
+            [ch, nl]
+        })
+        .flatten()
+        .collect();
+    Ok(s)
 }
 
 fn solve(input: &str) -> Result<(i32, String)> {
