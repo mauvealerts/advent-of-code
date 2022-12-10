@@ -45,7 +45,8 @@ pub fn find_distinct_slow(input: &str, win_size: usize) -> Option<usize> {
                 }
             }
             true
-        }).map(|idx| idx + win_size)
+        })
+        .map(|idx| idx + win_size)
 }
 
 pub fn find_distinct_fewer_cmp(input: &str, win_size: usize) -> Option<usize> {
@@ -128,6 +129,22 @@ pub fn find_distinct_linear_const_unchecked<const N: usize>(input: &str) -> Opti
     None
 }
 
+fn find_distinct_linear_noscan(input: &str, win_size: usize) -> Option<usize> {
+    let mut set = LowerMultiSetNoScan::default();
+    for (i, w) in input.as_bytes().windows(win_size).enumerate() {
+        if i == 0 {
+            set.add_all(w)
+        } else {
+            set.add(*w.last().unwrap())
+        }
+        if set.all_unique() {
+            return Some(i + win_size);
+        }
+        set.remove(*w.first().unwrap())
+    }
+    None
+}
+
 struct LowerMultiSetBounds {
     counts: [u8; 26],
 }
@@ -197,6 +214,44 @@ impl LowerMultiSetUnchecked {
     }
 }
 
+#[derive(Default)]
+struct LowerMultiSetNoScan {
+    counts: [u8; 26],
+    dupes: u8,
+}
+
+impl LowerMultiSetNoScan {
+    fn add(&mut self, c: u8) {
+        debug_assert!(c.is_ascii_lowercase());
+        let cnt = &mut self.counts[(c - b'a') as usize];
+        if *cnt == 1 {
+            self.dupes += 1
+        }
+        *cnt += 1
+    }
+
+    fn add_all(&mut self, s: &[u8]) {
+        for c in s {
+            self.add(*c)
+        }
+    }
+
+    fn remove(&mut self, c: u8) {
+        debug_assert!(c.is_ascii_lowercase());
+        let cnt = &mut self.counts[(c - b'a') as usize];
+        if *cnt > 0 {
+            *cnt -= 1
+        }
+        if *cnt == 1 {
+            self.dupes -= 1
+        }
+    }
+
+    fn all_unique(&self) -> bool {
+        self.dupes == 0
+    }
+}
+
 fn bench_stuff(c: &mut Criterion) {
     let mut group = c.benchmark_group("find_distinct");
     let data = include_str!("../data/challenge/day06.txt");
@@ -226,6 +281,9 @@ fn bench_stuff(c: &mut Criterion) {
             wsize,
             |b, i| b.iter(|| find_distinct_linear_unchecked(black_box(data), *i)),
         );
+        group.bench_with_input(BenchmarkId::new("linear no scan", wsize), wsize, |b, i| {
+            b.iter(|| find_distinct_linear_noscan(black_box(data), *i))
+        });
     }
     group.bench_function(BenchmarkId::new("const linear bounds", 4), |b| {
         b.iter(|| find_distinct_linear_const_bounds::<4>(black_box(data)))
