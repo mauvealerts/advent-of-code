@@ -215,4 +215,16 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day05.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: "QNHWJVJZW".to_owned(),
+                part2: "BPCZJLFJW".to_owned()
+            }
+        );
+    }
 }

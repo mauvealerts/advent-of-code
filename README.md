@@ -8,5 +8,7 @@ Each day has:
 * Example input in `data/example/`
 * Input for 'challenges' (needed to progress) in `data/challenge/`
 
-All examples are used as tests. They can be run via `cargo test` or
-[`cargo nextest run`](https://nexte.st/).
+All inputs are exercised via tests. They can be run via `cargo test` or
+[`cargo nextest run`](https://nexte.st/). Additionally, there are some benchmarks
+that can be run via
+[`cargo criterion`](https://github.com/bheisler/cargo-criterion).

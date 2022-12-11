@@ -46,4 +46,16 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day01.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                max: 68787,
+                top3: 198041
+            }
+        );
+    }
 }

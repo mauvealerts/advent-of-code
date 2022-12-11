@@ -231,7 +231,19 @@ mod tests {
     }
 
     #[test]
-    fn parse_crates() {
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day05.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: "QNHWJVJZW".to_owned(),
+                part2: "BPCZJLFJW".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_parse_crates() {
         let (leftover, ch) = a_crate("[a]").unwrap();
         assert_eq!(leftover, "");
         assert_eq!(ch, Some('a'));
@@ -260,7 +272,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_labels() {
+    fn test_parse_labels() {
         let (leftover, ()) = label_line(" 1 ").unwrap();
         assert_eq!(leftover, "");
 
@@ -269,7 +281,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_moves() {
+    fn test_parse_moves() {
         let (leftover, val) = a_move("move 1 from 2 to 3").unwrap();
         assert_eq!(leftover, "");
         assert_eq!(val, (1, 2, 3));
@@ -280,7 +292,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_crates_section() {
+    fn test_parse_crates_section() {
         let (leftover, crates) = crates_section(
             "[a]
  1 
@@ -297,7 +309,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_input_() {
+    fn test_parse_input() {
         let (leftover, (crates, moves)) = parse_input(
             "[a]
  1 

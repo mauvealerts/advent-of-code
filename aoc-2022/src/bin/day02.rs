@@ -127,4 +127,16 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day02.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 12772,
+                part2: 11618
+            }
+        );
+    }
 }

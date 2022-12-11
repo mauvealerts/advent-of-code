@@ -65,4 +65,16 @@ mod tests {
             assert_eq!(answer, Answer { part1, part2 }, "input: {inp:?}");
         }
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day06.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 1275,
+                part2: 3605
+            }
+        );
+    }
 }

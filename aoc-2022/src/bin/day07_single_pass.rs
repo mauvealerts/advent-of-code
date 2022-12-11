@@ -118,6 +118,18 @@ mod tests {
         );
     }
 
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day07.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 1845346,
+                part2: 3636703
+            }
+        );
+    }
+
     fn run_parser<'a, T>(parser: fn(&'a str) -> IResult<T>, input: &'a str) -> T {
         parser(input)
             .finish()

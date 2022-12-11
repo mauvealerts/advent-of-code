@@ -116,4 +116,16 @@ mod tests {
         let answer = solve(include_str!("../../data/example/day04.txt")).unwrap();
         assert_eq!(answer, Answer { part1: 2, part2: 4 });
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day04.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 477,
+                part2: 830
+            }
+        );
+    }
 }

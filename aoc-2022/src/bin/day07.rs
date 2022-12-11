@@ -206,6 +206,18 @@ mod tests {
     }
 
     #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day07.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 1845346,
+                part2: 3636703
+            }
+        );
+    }
+
+    #[test]
     fn test_dir_entry() {
         for (input, want) in [
             ("dir a", DirEntry::Dir("a".to_owned())),

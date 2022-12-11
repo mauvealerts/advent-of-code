@@ -110,4 +110,16 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day03.txt")).unwrap();
+        assert_eq!(
+            answer,
+            Answer {
+                part1: 7446,
+                part2: 2646
+            }
+        );
+    }
 }

@@ -1,8 +1,12 @@
 use anyhow::{Context, Result};
 
 fn main() -> Result<()> {
-    let d = include_str!("../../data/challenge/template.txt");
-    println!("{:#?}", solve(d)?);
+    for s in [
+        include_str!("../../data/example/template.txt"),
+        include_str!("../../data/challenge/template.txt"),
+    ] {
+        println!("{:#?}", solve(s)?)
+    }
     Ok(())
 }
 
@@ -28,6 +32,12 @@ mod tests {
     #[test]
     fn example() {
         let answer = solve(include_str!("../../data/example/template.txt")).unwrap();
+        assert_eq!(answer, (0, 0));
+    }
+
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/template.txt")).unwrap();
         assert_eq!(answer, (0, 0));
     }
 }
