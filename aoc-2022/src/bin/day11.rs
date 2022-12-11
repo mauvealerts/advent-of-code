@@ -196,14 +196,10 @@ fn part1(input: &str) -> Result<usize> {
 
 fn part2(input: &str) -> Result<usize> {
     let mut sim = run_parser(monkey_sim, input)?;
-    for i in 1..=10000 {
-        sim.run_once(|x| x % 96577);
-        if i % 1000 == 0 {
-            println!(
-                "after {i}; {:?}",
-                sim.monkeys.iter().map(|m| m.inspected).collect::<Vec<_>>()
-            )
-        }
+    // use modular monkeys in simian simulation
+    let lcm: u64 = sim.monkeys.iter().map(|m| m.fact).product();
+    for _ in 1..=10000 {
+        sim.run_once(|x| x % lcm);
     }
     let mut business: Vec<_> = sim.monkeys.into_iter().map(|m| m.inspected).collect();
     business.sort();
@@ -228,11 +224,11 @@ mod tests {
         assert_eq!(answer, (10605, 2713310158));
     }
 
-    // #[test]
-    // fn challenge() {
-    //     let answer = solve(include_str!("../../data/challenge/day11.txt")).unwrap();
-    //     assert_eq!(answer, (0, 0));
-    // }
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day11.txt")).unwrap();
+        assert_eq!(answer, (54054, 14314925001));
+    }
 
     fn try_parser<'a, T>(parser: fn(&'a str) -> IResult<T>, input: &'a str) -> T {
         run_parser(parser, input)
