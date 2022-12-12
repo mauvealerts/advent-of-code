@@ -3,7 +3,7 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 fn main() -> Result<()> {
     for s in [
@@ -21,14 +21,18 @@ struct Grid {
 }
 
 impl Grid {
-    fn get(&self, x: usize, y: usize) -> Option<u8> {
-        self.rows.get(x).map(|r| r.get(y)).flatten().copied()
+    fn get(&self, x: isize, y: isize) -> Option<u8> {
+        if x < 0 || y < 0 {
+            return None;
+        }
+        let (x, y): (usize, usize) = (x.try_into().unwrap(), y.try_into().unwrap());
+        self.rows.get(x).and_then(|r| r.get(y)).copied()
     }
 
     fn position(&self, needle: u8) -> Option<Coord> {
         for x in 0..self.rows.len() {
             if let Some(y) = self.rows[x].iter().position(|hay| hay == &needle) {
-                return Some((x, y));
+                return Some((x.try_into().unwrap(), y.try_into().unwrap()));
             }
         }
         None
@@ -38,7 +42,7 @@ impl Grid {
         let mut ret = Vec::new();
         for x in 0..self.rows.len() {
             if let Some(y) = self.rows[x].iter().position(|hay| hay == &needle) {
-                ret.push((x, y));
+                ret.push((x.try_into().unwrap(), y.try_into().unwrap()));
             }
         }
         ret
@@ -49,15 +53,12 @@ impl FromStr for Grid {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let rows = s
-            .lines()
-            .map(|l| l.as_bytes().iter().copied().collect())
-            .collect();
+        let rows = s.lines().map(|l| l.as_bytes().to_vec()).collect();
         Ok(Self { rows })
     }
 }
 
-type Coord = (usize, usize);
+type Coord = (isize, isize);
 
 #[derive(Debug, PartialEq, Eq)]
 struct Graph {
@@ -79,11 +80,7 @@ fn reach(from: u8, to: u8) -> bool {
 }
 
 impl Graph {
-    fn adj(&self, x: usize, y: usize) -> Result<Vec<Coord>> {
-        let (ix, iy): (isize, isize) = (
-            x.try_into().context("x to isize")?,
-            y.try_into().context("y to isize")?,
-        );
+    fn adj(&self, x: isize, y: isize) -> Result<Vec<Coord>> {
         let from = self
             .grid
             .get(x, y)
@@ -91,17 +88,7 @@ impl Graph {
 
         let mut ret = Vec::with_capacity(4);
         for (dx, dy) in [(0, 1), (0, -1), (-1, 0), (1, 0)] {
-            let tx: usize = if let Ok(v) = (ix + dx).try_into() {
-                v
-            } else {
-                continue;
-            };
-            let ty: usize = if let Ok(v) = (iy + dy).try_into() {
-                v
-            } else {
-                continue;
-            };
-
+            let (tx, ty) = (x + dx, y + dy);
             if let Some(to) = self.grid.get(tx, ty) {
                 if reach(from, to) {
                     ret.push((tx, ty));
@@ -111,7 +98,7 @@ impl Graph {
         Ok(ret)
     }
 
-    fn shortest_path(&self, x: usize, y: usize) -> Result<usize> {
+    fn shortest_path(&self, x: isize, y: isize) -> Result<Option<usize>> {
         let mut seen = HashSet::with_capacity(self.grid.rows.len() * self.grid.rows[0].len());
         let mut q = VecDeque::with_capacity(self.grid.rows.len());
         q.push_back(((x, y), 0));
@@ -121,7 +108,7 @@ impl Graph {
             }
             seen.insert((x, y));
             if b'E' == self.grid.get(x, y).context("visiting")? {
-                return Ok(dist);
+                return Ok(Some(dist));
             }
             for dest in self.adj(x, y).context("traversing")? {
                 // This check isn't necesesary
@@ -130,7 +117,7 @@ impl Graph {
                 }
             }
         }
-        bail!("No path found")
+        Ok(None)
     }
 }
 
@@ -146,20 +133,19 @@ impl TryFrom<Grid> for Graph {
 
 fn part1(input: &str) -> Result<usize> {
     let g: Graph = input.parse::<Grid>()?.try_into()?;
-    g.shortest_path(g.start.0, g.start.1)
+    g.shortest_path(g.start.0, g.start.1)?
+        .ok_or_else(|| anyhow!("No path found"))
 }
 
 fn part2(input: &str) -> Result<usize> {
     let g: Graph = input.parse::<Grid>()?.try_into()?;
-    let m = g
-        .grid
+    g.grid
         .find_all(b'a')
         .into_iter()
-        .map(|(x, y)| g.shortest_path(x, y).ok())
-        .flatten()
+        // ew, unwrap
+        .filter_map(|(x, y)| g.shortest_path(x, y).unwrap())
         .min()
-        .unwrap();
-    Ok(m)
+        .ok_or_else(|| anyhow!("No path found"))
 }
 
 fn solve(input: &str) -> Result<(usize, usize)> {
@@ -173,17 +159,17 @@ fn solve(input: &str) -> Result<(usize, usize)> {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn example() {
-    //     let answer = solve(include_str!("../../data/example/template.txt")).unwrap();
-    //     assert_eq!(answer, (0, 0));
-    // }
+    #[test]
+    fn example() {
+        let answer = solve(include_str!("../../data/example/day12.txt")).unwrap();
+        assert_eq!(answer, (31, 29));
+    }
 
-    // #[test]
-    // fn challenge() {
-    //     let answer = solve(include_str!("../../data/challenge/template.txt")).unwrap();
-    //     assert_eq!(answer, (0, 0));
-    // }
+    #[test]
+    fn challenge() {
+        let answer = solve(include_str!("../../data/challenge/day12.txt")).unwrap();
+        assert_eq!(answer, (391, 386));
+    }
 
     #[test]
     fn test_grid_parse() {
@@ -264,19 +250,4 @@ mod tests {
             assert_eq!(got, want, "({x}, {y})")
         }
     }
-
-    // #[test]
-    // fn test_part1() {
-    //     for (s, want) in [
-    //         ("SE", 1),
-    //         ("SabE", 3),
-    //         (concat!("Sab\n", "mzc\n", "nzE"), 4),
-    //     ] {
-    //         assert_eq!(
-    //             part1(s).with_context(|| format!("{s:?}")).unwrap(),
-    //             want,
-    //             "{s:?}"
-    //         )
-    //     }
-    // }
 }
