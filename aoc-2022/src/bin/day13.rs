@@ -31,7 +31,7 @@ fn packet(input: &str) -> IResult<P> {
         map_res(digit1, |s: &str| -> Result<P> { Ok(P::N(s.parse()?)) }),
         map(
             delimited(char('['), separated_list0(char(','), packet), char(']')),
-            |v| P::L(v),
+            P::L,
         ),
     ))(input)
 }
@@ -43,7 +43,7 @@ fn packet_pair_list(input: &str) -> IResult<Vec<(P, P)>> {
     )(input)
 }
 
-fn compare_lists(x: &Vec<P>, y: &Vec<P>) -> std::cmp::Ordering {
+fn compare_lists(x: &[P], y: &[P]) -> Ordering {
     for i in 0..x.len() {
         if i >= y.len() {
             return Ordering::Greater;
@@ -62,12 +62,12 @@ fn compare_lists(x: &Vec<P>, y: &Vec<P>) -> std::cmp::Ordering {
 }
 
 impl Ord for P {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (P::N(x), P::N(y)) => x.cmp(y),
             (P::L(x), P::L(y)) => compare_lists(x, y),
-            (P::N(x), P::L(y)) => compare_lists(&vec![P::N(*x)], y),
-            (P::L(x), P::N(y)) => compare_lists(x, &vec![P::N(*y)]),
+            (P::N(x), P::L(y)) => compare_lists(&[P::N(*x)], y),
+            (P::L(x), P::N(y)) => compare_lists(x, &[P::N(*y)]),
         }
     }
 }
