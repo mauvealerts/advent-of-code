@@ -127,7 +127,7 @@ impl TryFrom<Vec<RLine>> for Grid {
     type Error = anyhow::Error;
 
     fn try_from(lines: Vec<RLine>) -> Result<Self> {
-        ensure!(None != lines.iter().flatten().next(), "No points");
+        ensure!(lines.iter().flatten().next().is_some(), "No points");
         let want_w = 1 + lines.iter().flatten().map(|(x, _)| x).max().unwrap();
         let h = 1 + lines.iter().flatten().map(|(_, y)| y).max().unwrap();
 
@@ -140,9 +140,9 @@ impl TryFrom<Vec<RLine>> for Grid {
             for [a, b] in l.array_windows() {
                 let (fx, tx) = (min(a.0, b.0), max(a.0, b.0));
                 let (fy, ty) = (min(a.1, b.1), max(a.1, b.1));
-                for i in fy..=ty {
-                    for j in fx..=tx {
-                        g[i][j] = true;
+                for r in g.iter_mut().take(ty + 1).skip(fy) {
+                    for cell in r.iter_mut().take(tx + 1).skip(fx) {
+                        *cell = true;
                     }
                 }
             }
